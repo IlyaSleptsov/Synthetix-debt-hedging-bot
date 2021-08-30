@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "bignumber.js": "^9.0.1",
+    "ccxt": "^1.55.25",
+    "discord.js": "^13.1.0",
+    "dotenv": "^10.0.0",
+    "node-fetch": "^2.6.1",
+    "web3": "^1.5.1"
+  }
+}

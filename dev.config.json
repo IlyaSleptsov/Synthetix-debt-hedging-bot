@@ -1,0 +1,15 @@
+{
+  "defaultRoundDecimals": 3,
+  "minBinanceOrderAmount": 10,
+  "binanceCurs": {
+    "USDT": {
+      "decimals": 0
+    },
+    "ETH": {
+      "decimals": 4
+    },
+    "BTC": {
+      "decimals": 5
+    }
+  }
+}
