@@ -1,16 +1,20 @@
 const crypto = require('crypto');
 const fetch = require('node-fetch');
 
+const log = require('./../handlers/logger')
+
 const BASE_URL = 'https://api.binance.com'
 
 const PRICE_ENDPOINT = '/api/v3/ticker/price'
 const SPOT_BALANCE_ENDPOINT = '/api/v3/account'
 const MARGIN_BALANCE = '/sapi/v1/margin/account'
 const MARGIN_CLOSE_ENDPOINT = '/sapi/v1/margin/repay'
-const SPOT_NEW_ORDER = '/api/v3/order'
+const SPOT_NEW_ORDER_ENDPOINT = '/api/v3/order'
 const MARGIN_TRANSFER_ENDPOINT = '/sapi/v1/margin/transfer'
 const MARGIN_OPEN_ENDPOINT = '/sapi/v1/margin/loan'
 const TRADE_FEE_ENDPOINT = '/sapi/v1/asset/tradeFee'
+
+const FILE_NAME = 'binance'
 
 class Binance {
     constructor(apiToken, secretToken) {
@@ -19,9 +23,12 @@ class Binance {
     }
 
     async getSpotBalance() {
+        const METHOD = 'getSpotBalance'
+        log(FILE_NAME, METHOD, 'Requesting spot balance...')
+
         const params = `timestamp=${Date.now()}`
 
-        const signature = crypto.createHmac('sha256', this.SECRET).update(params).digest('hex');
+        const signature = crypto.createHmac('sha256', this.SECRET).update(params).digest('hex')
         const url = `${BASE_URL}${SPOT_BALANCE_ENDPOINT}?${params}&signature=${signature}`
 
         const response = await fetch(url, {
@@ -30,12 +37,19 @@ class Binance {
                 'content-type': 'application/json',
                 'X-MBX-APIKEY': this.API
             },
-        });
+        })
+
         const data = await response.json()
+
+        log(FILE_NAME, METHOD, 'Data received!')
+
         return data
     }
 
     async getMarginBalance() {
+        const METHOD = 'getMarginBalance'
+        log(FILE_NAME, METHOD, 'Requesting margin balance...')
+
         const params = `timestamp=${Date.now()}`
         const signature = crypto.createHmac('sha256', this.SECRET).update(params).digest('hex');
 
@@ -49,10 +63,16 @@ class Binance {
             },
         });
         const data = await response.json()
+
+        log(FILE_NAME, METHOD, 'Data received!')
+
         return data
     }
 
     async getPrices() {
+        const METHOD = 'getPrices'
+        log(FILE_NAME, METHOD, 'Requesting binance prices...')
+
         const url = `${BASE_URL}${PRICE_ENDPOINT}`
 
         const response = await fetch(url, {
@@ -63,6 +83,9 @@ class Binance {
             }
         });
         const data = await response.json()
+
+        log(FILE_NAME, METHOD, 'Data received!')
+
         return data
     }
 
@@ -112,10 +135,13 @@ class Binance {
     // }
 
     async spotNewOrder(symbol, side, type, quantity) {
+        const METHOD = 'spotNewOrder'
+        log(FILE_NAME, METHOD, `params = (${symbol}, ${side}, ${type}, ${quantity})`)
+
         const params = `quoteOrderQty=${quantity}&type=${type}&side=${side}&symbol=${symbol}&timestamp=${Date.now()}`
         const signature = crypto.createHmac('sha256', this.SECRET).update(params).digest('hex');
 
-        const url = `${BASE_URL}${SPOT_NEW_ORDER}?${params}&signature=${signature}`
+        const url = `${BASE_URL}${SPOT_NEW_ORDER_ENDPOINT}?${params}&signature=${signature}`
 
         const response = await fetch(url, {
             method: 'POST',
@@ -125,6 +151,9 @@ class Binance {
             },
         });
         const data = await response.json()
+
+        log(FILE_NAME, METHOD, 'Data received!')
+
         return data
     }
 
@@ -133,6 +162,8 @@ class Binance {
     //   "clientTag": ""
     // }
     async marginTransfer(asset, amount, type) {
+        const METHOD = 'marginTransfer'
+        log(FILE_NAME, METHOD, `params = (${asset}, ${amount}, ${type})`)
         const params = `amount=${amount}&asset=${asset}&type=${type}&timestamp=${Date.now()}`
         const signature = crypto.createHmac('sha256', this.SECRET).update(params).digest('hex');
 
@@ -146,6 +177,9 @@ class Binance {
             },
         });
         const data = await response.json()
+
+        log(FILE_NAME, METHOD, 'Data received!')
+
         return data
     }
 
@@ -154,6 +188,9 @@ class Binance {
     //   "clientTag": ""
     // }
     async closeMargin(asset, amount) {
+        const METHOD = 'closeMargin'
+        log(FILE_NAME, METHOD, `params = (${asset}, ${amount})`)
+
         const params = `amount=${amount}&asset=${asset}&timestamp=${Date.now()}`
         const signature = crypto.createHmac('sha256', this.SECRET).update(params).digest('hex');
 
@@ -167,6 +204,9 @@ class Binance {
             },
         });
         const data = await response.json()
+
+        log(FILE_NAME, METHOD, 'Data received!')
+
         return data
     }
 
@@ -175,6 +215,9 @@ class Binance {
     //   "clientTag": ""
     // }
     async openMargin(asset, amount) {
+        const METHOD = 'openMargin'
+        log(FILE_NAME, METHOD, `params = (${asset}, ${amount})`)
+
         const params = `amount=${amount}&asset=${asset}&timestamp=${Date.now()}`
         const signature = crypto.createHmac('sha256', this.SECRET).update(params).digest('hex');
 
@@ -188,6 +231,9 @@ class Binance {
             },
         });
         const data = await response.json()
+
+        log(FILE_NAME, METHOD, 'Data received!')
+
         return data
     }
 
@@ -200,6 +246,8 @@ class Binance {
     //     ....
     // ]
     async getTradeFee() {
+        const METHOD = 'getTradeFee'
+        log(FILE_NAME, METHOD, `Requesting trade fee...`)
         const params = `timestamp=${Date.now()}`
         const signature = crypto.createHmac('sha256', this.SECRET).update(params).digest('hex');
 
@@ -213,6 +261,9 @@ class Binance {
             }
         });
         const data = await response.json()
+
+        log(FILE_NAME, METHOD, 'Data received!')
+
         return data
     }
 

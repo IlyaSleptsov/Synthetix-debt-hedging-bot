@@ -1,7 +1,7 @@
 const Web3 = require('web3');
 const BN = require('bignumber.js');
 
-const Etherscan = require('../api/etherscan')
+const Etherscan = require('./../api/etherscan')
 
 const ALCHEMY_BASE_URL = 'wss://eth-mainnet.alchemyapi.io/v2/'
 
@@ -77,7 +77,6 @@ class SynthetixHandler {
 
         const { total } = tokenObject
         const tokenObjArr = []
-        const percentDebtArr = []
         for (const synth of synthArr) {
             const { usd } = tokenObject[synth]
             const tokenDebtPercent = usd.div(total).times(100).abs()
@@ -173,8 +172,7 @@ class SynthetixHandler {
         const resolverABI = JSON.parse(await this.etherscanA.getABI(resolverAddress))
         const resolverContract = new web3.eth.Contract(resolverABI, resolverAddress)
         const { alreadyIssued } = await resolverContract.methods.remainingIssuableSynths(address).call()
-        const usdDebt = new BN(alreadyIssued).div(1e18)
-        return usdDebt
+        return new BN(alreadyIssued).div(1e18)
     }
 }
 

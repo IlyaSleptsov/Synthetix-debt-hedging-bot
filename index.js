@@ -1,13 +1,10 @@
 require('dotenv').config()
-const Web3 = require("web3");
 const BN = require('bignumber.js');
 const { Client, Intents } = require('discord.js');
 
 const BinanceHandler = require('./handlers/binanceHandler')
 const SynthetixHandler = require('./handlers/synthetixHandler')
-
-const BLOCK_DELAY = 30000
-
+const log = require('./handlers/logger')
 
 const {
     DISCORD_TOKEN,
@@ -25,55 +22,203 @@ const {
 } = process.env
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
-
 const binanceH = new BinanceHandler(BINANCE_API, BINANCE_SECRET)
 const synthetixH = new SynthetixHandler(SYNTHETIX_ADDRESS, ETHERSCAN_TOKEN, ALCHEMY_ID, MINIMAL_THRESHOLD_BUY)
 
-// client.login(DISCORD_TOKEN)
-//
-// client.on("ready", function() {
-//     console.log(client.user.username + " started!");
-// });
-//
-// client.on('messageCreate', async(message) => {
-//     let prefix = DISCORD_PREFIX
-//     if (message.author.bot) {
-//         return;
-//     }
-//     if (!message.content.startsWith(prefix)) {
-//         const text = `Please use command prefix "${prefix}"`
-//         message.channel.send(text);
-//     }
-//     const { cleanContent } = message
-//     const contentArr = cleanContent.split(' ')
-//     const command = contentArr[0]
-//
-//     if (command === '!run') {
-//         message.channel.send('Script was launched!');
-//         setInterval(async ()=> {
-//             await job(message)
-//         }, BLOCK_DELAY)
-//     }
-//
-// })
+const FILE_NAME = 'index'
+const BLOCK_DELAY = 60000
+const INIT_MESSAGE = '```Hey! This bot opens positions in accordance with the Synthetix debt structure and hedges against the risks of changes in the size of your personal debt.\n' +
+    'Documentation: github_link```\n'
 
-job()
+client.login(DISCORD_TOKEN)
 
-async function job() {
+client.on("ready", function() {
+    console.log('Bot has started!')
+});
+
+client.on('messageCreate', async(message) => {
+    let close = false
+    let prefix = DISCORD_PREFIX
+    if (message.author.bot) {
+        return;
+    }
+
+    await checkInputParameters(message, process.env)
+
+    if (!message.content.startsWith(prefix)) {
+        const text = `Please use command prefix "${prefix}"`
+        message.channel.send(text);
+    }
+    const { cleanContent } = message
+    const contentArr = cleanContent.split(' ')
+    const command = contentArr[0]
+
+    if (command === '!run') {
+        message.channel.send(INIT_MESSAGE);
+        await job(message)
+        setInterval(async ()=> {
+            if (!close) {
+                await job(message)
+            }
+        }, BLOCK_DELAY)
+    }
+    if (command === '!close') {
+        close = true
+        await binanceH.convertTradeFees()
+        const advancedBinanceObject = await binanceH.getAdvancedBalancesInfo()
+        await binanceH.convertPositions(advancedBinanceObject)
+        await sendBinanceBalanceData(message, advancedBinanceObject)
+        process.exit()
+    }
+
+})
+
+async function checkInputParameters(message, config) {
+    let err = false
+    const importantParameters =
+        [
+            'DISCORD_TOKEN',
+            'DISCORD_PREFIX',
+            'SYNTHETIX_ADDRESS',
+            'ETHERSCAN_TOKEN',
+            'ALCHEMY_ID',
+            'MINIMAL_THRESHOLD_BUY',
+            'BINANCE_API',
+            'BINANCE_SECRET',
+            'TOLERANCE'
+        ]
+    for (const param of importantParameters) {
+        if (!config[param]) {
+            err = true
+            const errMsg = `Failed to run the algorithm. Please, check field ${param} in Env-config!`
+            await message.channel.send('```'+errMsg+'```');
+        }
+    }
+    if (err) {
+        process.exit()
+    }
+}
+
+async function job(message) {
+    const METHOD = 'job'
+
+    log(FILE_NAME, METHOD, 'Started global check!')
+
 
     await binanceH.convertTradeFees()
 
     const advancedBinanceObject = await binanceH.getAdvancedBalancesInfo()
 
+    console.log(JSON.stringify(advancedBinanceObject, null, 2))
+
     const synthetixGlobalData = await synthetixH.getFilteredSynthetixData()
 
     const { needRebalance, difObj } = await isRebalanceCase(advancedBinanceObject, synthetixGlobalData)
 
-    console.log(JSON.stringify(difObj, null, 2))
     if (needRebalance) {
-        await binanceH.convertToTether(advancedBinanceObject)
+        await sendBinanceBalanceData(message, advancedBinanceObject)
+        await sendSynthetixData(message, difObj)
+        await binanceH.convertPositions(advancedBinanceObject)
+        const afterRebalanceBalance = await binanceH.getAdvancedBalancesInfo()
+        await sendBinanceBalanceData(message, afterRebalanceBalance)
+
         await binanceH.placeInSynthDistribution(difObj)
+        const updBalanceObj = await binanceH.getAdvancedBalancesInfo()
+        const { difObj: updDifObj } = await isRebalanceCase(updBalanceObj, synthetixGlobalData)
+        await finishRebalance(message, updDifObj)
     }
+}
+
+async function sendBinanceBalanceData(message, advancedBinanceObject) {
+    let balanceMessage = 'Connected to the exchange. Your balance:\n'
+    const { spot, margin } = advancedBinanceObject
+    if (Object.keys(spot).length > 0) {
+        balanceMessage = balanceMessage +
+            `\nSpot:\n`
+
+        for (const cur in spot) {
+            const {
+                price,
+                amount,
+                usd,
+                percent
+            } = spot[cur]
+            balanceMessage = balanceMessage +
+                `\n${cur}:\n`+
+                `USD price: ${price}\n`+
+                `Amount: ${amount} ${cur}\n`+
+                `Value: ${usd} USDT\n`+
+                `Percentage of balance: ${prettyPercent(percent)}%\n`
+        }
+    }
+    if (Object.keys(margin).length > 0) {
+        balanceMessage = balanceMessage +
+            `\nMargin:\n`
+
+        for (const cur in margin) {
+            const {
+                price,
+                amount,
+                usd,
+                percent
+            } = margin[cur]
+            balanceMessage = balanceMessage +
+                `\n${cur}:\n`+
+                `USD price: ${price}\n`+
+                `Amount: ${amount} ${cur}\n`+
+                `Value: ${usd} USDT\n`+
+                `Percentage of balance: ${prettyPercent(percent)}%\n`
+        }
+    }
+    await message.channel.send('```'+balanceMessage+'```');
+}
+
+async function sendSynthetixData(message, difObj) {
+    let debtMessage = 'Current debt structure:\n'
+
+    for (const cur in difObj) {
+        const {
+            synthPercent,
+            dif,
+            binancePercent,
+            tradeCase,
+        } = difObj[cur]
+
+        debtMessage = debtMessage +
+            `\n${cur}:\n`+
+            `Side: ${tradeCase}\n`+
+            `Synth Percent: ${prettyPercent(synthPercent)}%\n`+
+            `Binance Percent: ${prettyPercent(binancePercent)}%\n`+
+            `Diff: ${prettyPercent(dif)}%\n`
+    }
+
+    await message.channel.send('```'+debtMessage+'```');
+}
+
+async function finishRebalance(message, difObj) {
+    let finishMessage = 'Rebalancing completed. Your portfolio:\n'
+
+    for (const cur in difObj) {
+        const {
+            synthPercent,
+            dif,
+            binancePercent,
+            tradeCase,
+        } = difObj[cur]
+
+        finishMessage = finishMessage +
+            `\n${cur}:\n`+
+            `Side: ${tradeCase}\n`+
+            `Synth Percent: ${prettyPercent(synthPercent)}%\n`+
+            `Binance Percent: ${prettyPercent(binancePercent)}%\n`+
+            `Diff: ${prettyPercent(dif)}%\n`
+    }
+
+    await message.channel.send('```'+finishMessage+'```');
+}
+
+function prettyPercent(percent) {
+    return new BN(percent).dp(3, BN.ROUND_FLOOR).toNumber()
 }
 
 //
@@ -141,35 +286,3 @@ async function isRebalanceCase(binanceData, synthetixData) {
     }
     return { needRebalance, difObj }
 }
-
-
-// async function sendBinanceData(message) {
-//     let balance = await binance.fetchBalance()
-//     console.log(balance)
-//     // let text =
-//     //     `Binance User Data (apiKey: ${BINANCE_API.substr(0,5)}***):\n`+
-//     //     `Margin: 0 ETH`
-//     // message.channel.send(text);
-//
-// }
-//
-// async function sendSynthetixGlobalData(message) {
-//     const sortedArr = await synthetixH.getFilteredSynthetixData()
-//     let text = `Synthetix Global Debt:`
-//     for (const obj of sortedArr) {
-//         const { synth, percent, usdStr } = obj
-//         text = text+
-//             `\n${synth}\n`+
-//             `Total: ${usdStr}$\n`+
-//             `% of Pool: ${new BN(percent).toFixed(2)}%\n`
-//     }
-//     message.channel.send(text);
-// }
-//
-// async function sentSynthetixUserDebt(message) {
-//     const usdDebtBN = await synthetixH.getUserDebt()
-//     let text =
-//         `Synthetix User Debt:\n`+
-//         `${usdDebtBN.toFormat(2)}$ (address: ${SYNTHETIX_ADDRESS.substr(0,5)}***)`
-//     message.channel.send(text);
-// }

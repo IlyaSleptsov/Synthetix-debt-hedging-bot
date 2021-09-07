@@ -1,7 +1,7 @@
 const BN = require('bignumber.js');
 
-const Binance = require('../api/binance')
-const config = require('../dev.config.json')
+const Binance = require('./../api/binance')
+const config = require('./../dev.config.json')
 
 class BinanceHandler {
     constructor(apiToken, secretToken) {
@@ -17,18 +17,15 @@ class BinanceHandler {
             const bnFee = new BN(takerCommission)
             this.feeObj[symbol] = {fee: bnFee.toNumber(), bnFee}
         }
-        console.log(JSON.stringify(this.feeObj, null, 2))
     }
 
-    async convertToTether(advancedBinanceObject) {
+    async convertPositions(advancedBinanceObject) {
         const { spot, margin } = advancedBinanceObject
         for (const cur in spot) {
             const {
-                price,
                 usd,
                 amount,
                 type,
-                percent,
             } = spot[cur]
 
             const { minBinanceOrderAmount } = config
@@ -79,33 +76,44 @@ class BinanceHandler {
                 netAsset,
             } = marginObj
 
-            if (borrowed === 0) {
-                await this.binance.marginTransfer(cur, free, 2)
-            }
-            else {
-                if (netAsset >= 0) {
-                    const closeMarginObj = await this.binance.closeMargin(cur, free)
-                    console.log(JSON.stringify(closeMarginObj, null, 2))
+            if (cur !== 'USDT') {
+                if (borrowed === 0) {
+                    await this.binance.marginTransfer(cur, free, 2)
                 }
                 else {
-                    const {minBinanceOrderAmount} = config
-                    const usdAsset = Math.abs(new BN(netAsset).times(price).toNumber())
-                    const usdAmountToTrade = usdAsset > minBinanceOrderAmount
-                        ? usdAsset
-                        : minBinanceOrderAmount
-                    if (type === 1) {
-                        const pair = `${cur}USDT`
-                        const fee = new BN(usdAmountToTrade).times(this.feeObj[pair].bnFee)
-                        const totalAmount = new BN(usdAmountToTrade).plus(fee).dp(0, BN.ROUND_FLOOR)
+                    if (netAsset >= 0) {
+                        const closeMarginObj = await this.binance.closeMargin(cur, free)
+                        console.log(JSON.stringify(closeMarginObj, null, 2))
+                    }
+                    else {
+                        const { minBinanceOrderAmount } = config
+                        const usdAsset = Math.abs(new BN(netAsset).times(price).toNumber())
+                        const usdAmountToTrade = usdAsset > minBinanceOrderAmount
+                            ? usdAsset
+                            : minBinanceOrderAmount
+                        if (type === 1) {
+                            const pair = `${cur}USDT`
+                            const fee = new BN(usdAmountToTrade).times(this.feeObj[pair].bnFee)
+                            const totalAmount = new BN(usdAmountToTrade).plus(fee).dp(0, BN.ROUND_FLOOR)
 
-                        const orderData = await this.binance
-                            .spotNewOrder(`${cur}USDT`, 'BUY', 'MARKET', totalAmount.toNumber())
-                        console.log(JSON.stringify(orderData, null, 2))
-                        await this.binance.marginTransfer(cur, Math.abs(netAsset), 1)
-                        await this.binance.closeMargin(cur, free)
+                            const orderData = await this.binance
+                                .spotNewOrder(`${cur}USDT`, 'BUY', 'MARKET', totalAmount.toNumber())
+                            console.log(JSON.stringify(orderData, null, 2))
+
+
+                            const totalFundToClose = new BN(free).plus(Math.abs(netAsset)).toNumber()
+                            await this.binance.marginTransfer(cur, Math.abs(netAsset), 1)
+                            console.log(await this.binance.closeMargin(cur, totalFundToClose))
+                        }
                     }
                 }
             }
+        }
+
+        const usdtObj = margin.USDT
+        if (usdtObj) {
+            const { free } = usdtObj.marginObj
+            console.log(await this.binance.marginTransfer('USDT', free, 2))
         }
     }
 
@@ -168,7 +176,18 @@ class BinanceHandler {
                     price:price.toNumber(), usd, amount, type: -1, marginObj: marginBalanceObj[cur]
                 }
             }
+            else if (cur === 'USDT') {
+                const price = new BN(1)
+                const amount = marginBalanceObj[cur].free
+                const usd = amount
 
+                // Dont count margin USDT
+                // sumUsd = sumUsd.plus(usd)
+
+                advancedBalanceObj.margin[cur] = {
+                    price:price.toNumber(), usd, amount, type: 0, marginObj: marginBalanceObj[cur]
+                }
+            }
             else {
                 console.log(`[convertBalances] WARNING: No Tether price pair for ${cur}!`)
             }
@@ -262,7 +281,7 @@ class BinanceHandler {
         const { userAssets } = await this.binance.getMarginBalance()
         for (const curObj of userAssets) {
             const { asset, free, locked, borrowed, interest, netAsset } = curObj
-            if ((parseFloat(netAsset) !== 0 || parseFloat(borrowed) !== 0)  && asset !== 'USDT') {
+            if (parseFloat(netAsset) !== 0 || parseFloat(borrowed) !== 0) {
                 balanceObj[asset] = {
                     free: new BN(free).toNumber(),
                     locked: new BN(locked).toNumber(),
@@ -280,6 +299,7 @@ class BinanceHandler {
         console.log(await this.spotBalance())
         const { USDT: usdStr } = await this.spotBalance()
         for (const cur in difObj) {
+            console.log(cur)
             const { synthPercent, tradeCase } = difObj[cur]
             if (cur !== 'USD') {
                 if (tradeCase === 'spot') {
@@ -309,6 +329,8 @@ class BinanceHandler {
                     const usdAmountToTrade = usdAmount > minBinanceOrderAmount
                         ? usdAmount
                         : minBinanceOrderAmount
+
+                    await this.binance.marginTransfer('USDT', usdAmountToTrade, 1)
 
                     const curAmountToTrade = new BN(usdAmountToTrade).div(this.pricesObj[pair])
                     const fee = new BN(curAmountToTrade).times(this.feeObj[pair].bnFee)
