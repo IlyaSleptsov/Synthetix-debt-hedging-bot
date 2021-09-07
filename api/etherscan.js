@@ -5,6 +5,7 @@ class Etherscan {
     constructor(token) {
         this.token = token
     }
+
     async getABI(address) {
         const response = await fetch(`${ABI_URL}&address=${address}&apikey=${this.token}`, {
             method: 'GET',
