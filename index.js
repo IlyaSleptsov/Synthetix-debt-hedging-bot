@@ -8,9 +8,7 @@ const log = require('./handlers/logger')
 
 const {
     DISCORD_TOKEN,
-    DISCORD_PREFIX,
 
-    SYNTHETIX_ADDRESS,
     ETHERSCAN_TOKEN,
     ALCHEMY_ID,
     MINIMAL_THRESHOLD_BUY,
@@ -23,7 +21,7 @@ const {
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 const binanceH = new BinanceHandler(BINANCE_API, BINANCE_SECRET)
-const synthetixH = new SynthetixHandler(SYNTHETIX_ADDRESS, ETHERSCAN_TOKEN, ALCHEMY_ID, MINIMAL_THRESHOLD_BUY)
+const synthetixH = new SynthetixHandler(ETHERSCAN_TOKEN, ALCHEMY_ID, MINIMAL_THRESHOLD_BUY)
 
 const FILE_NAME = 'index'
 const BLOCK_DELAY = 60000
@@ -38,17 +36,12 @@ client.on("ready", function() {
 
 client.on('messageCreate', async(message) => {
     let close = false
-    let prefix = DISCORD_PREFIX
     if (message.author.bot) {
         return;
     }
 
     await checkInputParameters(message, process.env)
 
-    if (!message.content.startsWith(prefix)) {
-        const text = `Please use command prefix "${prefix}"`
-        message.channel.send(text);
-    }
     const { cleanContent } = message
     const contentArr = cleanContent.split(' ')
     const command = contentArr[0]
@@ -62,7 +55,7 @@ client.on('messageCreate', async(message) => {
             }
         }, BLOCK_DELAY)
     }
-    if (command === '!close') {
+    else if (command === '!close') {
         close = true
         await binanceH.convertTradeFees()
         const advancedBinanceObject = await binanceH.getAdvancedBalancesInfo()
@@ -70,7 +63,10 @@ client.on('messageCreate', async(message) => {
         await sendBinanceBalanceData(message, advancedBinanceObject)
         process.exit()
     }
-
+    else {
+        const text = `Wrong command!`
+        message.channel.send(text);
+    }
 })
 
 async function checkInputParameters(message, config) {
@@ -78,8 +74,6 @@ async function checkInputParameters(message, config) {
     const importantParameters =
         [
             'DISCORD_TOKEN',
-            'DISCORD_PREFIX',
-            'SYNTHETIX_ADDRESS',
             'ETHERSCAN_TOKEN',
             'ALCHEMY_ID',
             'MINIMAL_THRESHOLD_BUY',
@@ -119,8 +113,6 @@ async function job(message) {
         await sendBinanceBalanceData(message, advancedBinanceObject)
         await sendSynthetixData(message, difObj)
         await binanceH.convertPositions(advancedBinanceObject)
-        const afterRebalanceBalance = await binanceH.getAdvancedBalancesInfo()
-        await sendBinanceBalanceData(message, afterRebalanceBalance)
 
         await binanceH.placeInSynthDistribution(difObj)
         const updBalanceObj = await binanceH.getAdvancedBalancesInfo()

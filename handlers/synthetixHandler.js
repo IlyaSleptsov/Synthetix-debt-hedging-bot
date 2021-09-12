@@ -6,10 +6,9 @@ const Etherscan = require('./../api/etherscan')
 const ALCHEMY_BASE_URL = 'wss://eth-mainnet.alchemyapi.io/v2/'
 
 class SynthetixHandler {
-    constructor(SYNTHETIX_ADDRESS, ETHERSCAN_TOKEN, ALCHEMY_ID, TOLERANCE) {
+    constructor(ETHERSCAN_TOKEN, ALCHEMY_ID, TOLERANCE) {
         const alchemyProvider = new Web3.providers.WebsocketProvider(`${ALCHEMY_BASE_URL}${ALCHEMY_ID}`)
 
-        this.SYNTHETIX_ADDRESS = SYNTHETIX_ADDRESS
         this.TOLERANCE = TOLERANCE
 
         this.etherscanA = new Etherscan(ETHERSCAN_TOKEN)
@@ -160,19 +159,6 @@ class SynthetixHandler {
         const usd = await contract.methods.sUSDIssued().call()
 
         return new BN(usd).div(1e24).toNumber()
-    }
-
-    async getUserDebt() {
-        const address = this.SYNTHETIX_ADDRESS
-        const proxyAddress = '0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f'
-        const proxyAbi = JSON.parse(await this.etherscanA.getABI(proxyAddress))
-        const proxyContract = new this.web3.eth.Contract(proxyAbi, proxyAddress)
-        const resolverAddress = await proxyContract.methods.target().call()
-
-        const resolverABI = JSON.parse(await this.etherscanA.getABI(resolverAddress))
-        const resolverContract = new web3.eth.Contract(resolverABI, resolverAddress)
-        const { alreadyIssued } = await resolverContract.methods.remainingIssuableSynths(address).call()
-        return new BN(alreadyIssued).div(1e18)
     }
 }
 
