@@ -15,18 +15,21 @@ const {
 
     BINANCE_API,
     BINANCE_SECRET,
+    DEFAULT_CRYPTO,
 
     TOLERANCE
 } = process.env
 
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
-const binanceH = new BinanceHandler(BINANCE_API, BINANCE_SECRET)
+const binanceH = new BinanceHandler(BINANCE_API, BINANCE_SECRET, DEFAULT_CRYPTO)
 const synthetixH = new SynthetixHandler(ETHERSCAN_TOKEN, ALCHEMY_ID, MINIMAL_THRESHOLD_BUY)
 
 const FILE_NAME = 'index'
 const BLOCK_DELAY = 60000
+const GIT_LINK = 'https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot'
+
 const INIT_MESSAGE = '```Hey! This bot opens positions in accordance with the Synthetix debt structure and hedges against the risks of changes in the size of your personal debt.\n' +
-    'Documentation: github_link```\n'
+    'Documentation: '+GIT_LINK+'```\n'
 
 client.login(DISCORD_TOKEN)
 

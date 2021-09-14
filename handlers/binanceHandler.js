@@ -4,10 +4,11 @@ const Binance = require('./../api/binance')
 const config = require('./../dev.config.json')
 
 class BinanceHandler {
-    constructor(apiToken, secretToken) {
+    constructor(apiToken, secretToken, DEFAULT_CRYPTO) {
         this.binance = new Binance(apiToken, secretToken)
         this.feeObj = {}
         this.pricesObj = {}
+        this.DEFAULT_CRYPTO = DEFAULT_CRYPTO
     }
 
     async convertTradeFees() {
@@ -352,7 +353,7 @@ class BinanceHandler {
             ? usdAmount
             : minBinanceOrderAmount
 
-        const pair = `ETHUSDT`
+        const pair = `${this.DEFAULT_CRYPTO}USDT`
         const fee = new BN(usdAmountToTrade).times(this.feeObj[pair].bnFee)
         const totalAmount = new BN(usdAmountToTrade).plus(fee).dp(0, BN.ROUND_FLOOR)
 
