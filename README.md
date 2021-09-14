@@ -15,11 +15,11 @@ API key to the account from Binance exchange. Here is an instruction from Binanc
 Limitations:
 1. Only Binance supported as a CEX. Open an issue if you need another one.
 2. Provide an API key from the account that is dedicated to this bot. The bot won't work properly if there are other open positions. You can use [subaccounts](https://www.binance.com/en/support/faq/360020632811) on Binance if your level is VIP1 or higher.
-3. Check that your API key doesn't have withdrawal options.
+3. For this API key enable Spot & Margin Trading and Margin Loan, Repay & Transfer but don't enable withdrawal options.
 
 - *DISCORD_TOKEN*
 
-Discord is an interface to use this bot. Following [this instruction](https://www.writebots.com/discord-bot-token/), create your own Discord bot to manage your portfolio and get status updates. 
+Discord is an interface to use this bot. Following [this instruction](https://www.writebots.com/discord-bot-token/), create your own Discord bot to manage your portfolio and get status updates. Add this bot to your server. Don't forget to give it permission to send text messages.
 
 Discord bot commands:
 1. !run – start the bot;
@@ -65,3 +65,4 @@ cd Synthetix-debt-hedging-bot
 npm i
 node index.js
 ```
+Then open your Discord server with the bot and enter !run command.
