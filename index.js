@@ -63,7 +63,7 @@ client.on('messageCreate', async(message) => {
         await binanceH.convertTradeFees()
         const advancedBinanceObject = await binanceH.getAdvancedBalancesInfo()
         await binanceH.convertPositions(advancedBinanceObject)
-        await sendBinanceBalanceData(message, advancedBinanceObject)
+        await closePositions(message, advancedBinanceObject)
         process.exit()
     }
     else {
@@ -123,6 +123,12 @@ async function job(message) {
         await finishRebalance(message, updDifObj)
     }
 }
+
+async function closePositions(message) {
+    let balanceMessage = 'Done.\n'
+    await message.channel.send('```'+balanceMessage+'```');
+}
+
 
 async function sendBinanceBalanceData(message, advancedBinanceObject) {
     let balanceMessage = 'Connected to the exchange. Your balance:\n'
