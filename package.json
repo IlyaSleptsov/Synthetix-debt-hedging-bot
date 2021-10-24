@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "node index.js"
+  },
   "dependencies": {
     "bignumber.js": "^9.0.1",
     "discord.js": "^13.1.0",

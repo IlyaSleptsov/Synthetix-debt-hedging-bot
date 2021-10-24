@@ -1,0 +1,7 @@
+{
+  "name": "Synthetix Bot Launch",
+  "description": "Synthetix Debt Hedging Bot",
+  "repository": "https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["node"]
+}
