@@ -1,4 +1,9 @@
 # Synthetix Debt Hedging Bot
+
+<a href="https://heroku.com/deploy?template=https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot">
+  <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy">
+</a>
+
 SNX stakers are the counterparty of all trades made through the Synthetix protocol. To avoid taking a directional risk, it is prudent to hedge debt pool exposure by taking positions that reflect the debt pool composition (e.g., when traders are net long on synths, stakers should be net long in the spot market). 
 
 This bot mirrors the synth debt composition by taking on positions on spot markets. It uses Binance as a CEX to hedge the debt and Discord as a user interface.
@@ -66,3 +71,14 @@ npm i
 node index.js
 ```
 Then open your Discord server with the bot and enter !run command.
+
+
+## Deploy To Heroku
+
+1. Create [Heroku](https://heroku.com) user account
+2. Click [Deploy to heroku](https://heroku.com/deploy?template=https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot) link
+3. Fill app name and click "Deploy app"
+4. Choose added process in [board list](https://dashboard.heroku.com/apps)
+5. Push button "Settings" in header and add [all required parameters](https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot#required-parameters) in "Config Vars"
+6. Click "More" select box and choose "Restart all dynos"
+7. To see script logs - select "View logs" option
