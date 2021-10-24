@@ -82,3 +82,14 @@ Then open your Discord server with the bot and enter !run command.
 5. Push button "Settings" in header and add [all required parameters](https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot#required-parameters) in "Config Vars"
 6. Click "More" select box and choose "Restart all dynos"
 7. To see script logs - select "View logs" option
+
+## Backtesting
+The critical question before launching a bot is how to be sure that it won't burn much money in the long term.
+
+We have conducted a backtest of the bot's strategy. Here is the hedging portfolio backtesting data for nine months:
+
+![backtesting data](files/backtest.jpg)
+
+Note that there is a steady downward drift over time of the hedging portfolio relative to active debt. This is mostly from exchange fees and slippage, but this doesn't factor in exchange fees accrued by the staker, which can offset/reverse those losses over time.
+
+In addition, the long-term trend is dependent on the TOLERANCE parameter. The lower TOLERANCE, the more transactions are done, the more fees are paid.
