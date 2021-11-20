@@ -93,3 +93,4 @@ We have conducted a backtest of the bot's strategy. Here is the hedging portfoli
 Note that there is a steady downward drift over time of the hedging portfolio relative to active debt. This is mostly from exchange fees and slippage, but this doesn't factor in exchange fees accrued by the staker, which can offset/reverse those losses over time.
 
 In addition, the long-term trend is dependent on the TOLERANCE parameter. The lower TOLERANCE, the more transactions are done, the more fees are paid.
+
