@@ -77,8 +77,20 @@ Then open your Discord server with the bot and enter !run command.
 
 1. Create [Heroku](https://heroku.com) user account
 2. Click [Deploy to heroku](https://heroku.com/deploy?template=https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot) link
-3. Fill app name and click "Deploy app"
-4. Choose added process in [board list](https://dashboard.heroku.com/apps)
-5. Push button "Settings" in header and add [all required parameters](https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot#required-parameters) in "Config Vars"
+3. Fill the app name and click "Deploy app"
+4. Choose your app in the [board list](https://dashboard.heroku.com/apps)
+5. Push the "Settings" button in header and add [all required parameters](https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot#required-parameters) in "Config Vars". "KEY" is a variable name (like DISCORD_TOKEN), "VALUE" is its value.
 6. Click "More" select box and choose "Restart all dynos"
 7. To see script logs - select "View logs" option
+
+## Backtesting
+The critical question before launching a bot is how to be sure that it won't burn much money in the long term.
+
+We have conducted a backtest of the bot's strategy. Here is the hedging portfolio backtesting data for nine months:
+
+![backtesting data](files/backtest.jpg)
+
+Note that there is a steady downward drift over time of the hedging portfolio relative to active debt. This is mostly from exchange fees and slippage, but this doesn't factor in exchange fees accrued by the staker, which can offset/reverse those losses over time.
+
+In addition, the long-term trend is dependent on the TOLERANCE parameter. The lower TOLERANCE, the more transactions are done, the more fees are paid.
+
