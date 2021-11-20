@@ -45,7 +45,7 @@ It defines the minimal percentage of asset in debt that will be on the buy list.
 
 Example: MINIMAL_THRESHOLD_BUY is 1%. Synthetix debt consists of BTC 30%, ETH 69.5% and LINK 0.5%. Bot will buy BTC 30%, ETHEREUM 69.5% and 0.5% of base asset which is Ethereum by default (0.5% LINK < 1% threshold). 
 
-- *BASE_CURRENCY (default ETH)*
+- *DEFAULT_CRYPTO (default ETH)*
 
 If it's impossible to buy an asset from Synthetix debt on current CEX or an asset from Synthetix debt doesn't reach a minimal threshold buy, the bot will buy base currency instead.
 
@@ -79,9 +79,10 @@ Then open your Discord server with the bot and enter !run command.
 2. Click [Deploy to heroku](https://heroku.com/deploy?template=https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot) link
 3. Fill the app name and click "Deploy app"
 4. Choose your app in the [board list](https://dashboard.heroku.com/apps)
-5. Push the "Settings" button in header and add [all required parameters](https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot#required-parameters) in "Config Vars". "KEY" is a variable name (like DISCORD_TOKEN), "VALUE" is its value.
-6. Click "More" select box and choose "Restart all dynos"
-7. To see script logs - select "View logs" option
+5. Go to "Overview" -> "Configure Dynos" -> make "web npm start" OFF, "worker node index.js" ON
+6. Go to "Settings" and add [all required parameters](https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot#required-parameters) in "Config Vars". "KEY" is a variable name (like DISCORD_TOKEN), "VALUE" is its value.
+7. Click "More" select box and choose "Restart all dynos"
+8. If you want to see logs, go to "More" -> "View logs"
 
 ## Backtesting
 The critical question before launching a bot is how to be sure that it won't burn much money in the long term.
