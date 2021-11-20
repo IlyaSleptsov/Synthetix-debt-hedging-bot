@@ -3,6 +3,9 @@
   "scripts": {
     "start": "node index.js"
   },
+  "engines": {
+    "node": "16.13.0"
+  },
   "dependencies": {
     "bignumber.js": "^9.0.1",
     "discord.js": "^13.1.0",
