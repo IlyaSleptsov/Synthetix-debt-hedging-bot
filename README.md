@@ -1,6 +1,6 @@
 # Synthetix Debt Hedging Bot
 
-<a href="https://heroku.com/deploy?template=https://github.com/IlyaSleptsov/Synthetix-debt-hedging-bot">
+<a href="https://heroku.com/deploy?template=https://github.com/mylifeiscrypto/Synthetix-debt-hedging-bot">
   <img src="https://www.herokucdn.com/deploy/button.svg" alt="Deploy">
 </a>
 
